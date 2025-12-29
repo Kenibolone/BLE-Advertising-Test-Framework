@@ -1,77 +1,102 @@
-# BLE Flooder
+# BLE Advertising Test Framework
 
-This project implements a simple BLE (Bluetooth Low Energy) flooder using the ESP32-C6 to randomly advertise BLE devices with different names at regular intervals.
+This project implements a BLE advertising test framework on the ESP32-C6 to
+study high-frequency advertising behavior, payload construction, and scanner-side
+observation under dynamic conditions.
 
 ## Overview
 
-This code creates a BLE flooder that continuously advertises randomly generated names to simulate multiple BLE devices in the vicinity. It uses the ESP32-C6's Bluetooth capabilities to broadcast the advertisements with no connection requirement. This can be useful for testing purposes, simulating BLE environments, or understanding BLE advertisement behavior.
+The firmware repeatedly broadcasts BLE advertising packets with dynamically
+generated device names at controlled intervals. The goal is to explore how BLE
+advertising payloads are structured, how scanners interpret rapid advertisement
+changes, and how advertising parameters affect visibility and reliability.
+
+This project is intended for **protocol-level experimentation and learning**, not
+for establishing BLE connections.
 
 ## Features
 
-- **Random BLE Name Generation**: Each advertisement broadcasts a randomly generated name (ASCII characters).
-- **Non-connectable Advertising**: The advertisements are non-connectable, meaning they cannot be used for establishing a connection, but only for scanning purposes.
-- **Continuous Advertising**: The code runs in a loop, advertising different names every second.
+- **Dynamic Advertising Payloads**  
+  Advertises dynamically generated device names to observe scanner-side behavior
+  under frequent payload updates.
+
+- **Non-connectable Advertising**  
+  Uses non-connectable advertising types to focus purely on broadcast behavior.
+
+- **Configurable Advertising Interval**  
+  Advertising rate can be tuned to study timing effects and scan response limits.
 
 ## Dependencies
 
-- ESP32 development environment (Arduino IDE with ESP32 board support).
-- ESP32 Bluetooth stack (`esp_bt.h`, `esp_gap_ble_api.h`).
+- ESP32 development environment (Arduino IDE with ESP32 board support)
+- ESP32 Bluetooth stack:
+  - `esp_bt.h`
+  - `esp_gap_ble_api.h`
 
 ## Setup
 
-### 1. Install the ESP32 board in Arduino IDE
-If you haven't already, add the ESP32 board to your Arduino IDE. Follow these steps:
-- Open Arduino IDE.
-- Go to **File** → **Preferences**.
-- In the **Additional Boards Manager URLs** field, add the following URL: `https://dl.espressif.com/dl/package_esp32_index.json`.
-- Go to **Tools** → **Board** → **Boards Manager**, search for ESP32, and install the package.
+### 1. Install ESP32 Board Support
+- Open Arduino IDE  
+- Go to **File → Preferences**  
+- Add the following to **Additional Boards Manager URLs**:  
+  `https://dl.espressif.com/dl/package_esp32_index.json`  
+- Open **Tools → Board → Boards Manager**, search for *ESP32*, and install
 
-### 2. Select the Board
-- Go to **Tools** → **Board** and select your ESP32-C6 board (e.g., `XIAO ESP32C6`).
+### 2. Select Target Board
+- **Tools → Board → XIAO ESP32C6** (or equivalent ESP32-C6 board)
 
-### 3. Upload the Code
-- Copy and paste the code provided into the Arduino IDE.
-- Click the **Upload** button to upload the code to your ESP32-C6.
+### 3. Upload Firmware
+- Open the source code in Arduino IDE
+- Upload to the ESP32-C6
 
-## Code Explanation
+## Code Structure
 
-1. **Advertising Parameters**:
-   - `adv_params` configures the advertising behavior, including advertisement interval, advertisement type, and filter policies.
-   
-2. **Random Name Generation**:
-   - The function `advertiseRandomName()` generates a random name using ASCII characters and adds it to the advertising data. The name is sent as part of the BLE advertisement payload.
+### Advertising Parameters
+Advertising behavior (interval, type, filtering) is configured using
+`esp_ble_adv_params_t`.
 
-3. **GAP Callback**:
-   - The `gapCallback` function handles BLE events. When the advertisement data is successfully set, it starts advertising with the configured parameters.
+### Payload Generation
+A helper function generates dynamic device names and inserts them into the
+advertising payload before each advertising cycle.
 
-4. **Advertising Loop**:
-   - In the `loop()` function, the device continually advertises a new random name every second.
+### GAP Callback Handling
+The GAP callback handles advertisement setup completion events and triggers
+advertising with updated parameters.
+
+### Main Loop
+The firmware updates the advertising payload periodically and restarts advertising
+to reflect the new data.
 
 ## Usage
 
-Once the code is uploaded to the ESP32-C6, the device will start advertising with a random name every second. Use a BLE scanner (such as a mobile app or `bluetoothctl` on Linux) to scan for the advertisements. You'll see devices with randomly generated names.
+Once flashed, the ESP32-C6 will continuously broadcast BLE advertisements with
+changing payloads. A BLE scanner (mobile app or tools like `bluetoothctl`) can be
+used to observe how device names and advertisements appear over time.
 
 ## Customization
 
-- **Advertisement Interval**: You can change the advertisement interval by adjusting the `adv_int_min` and `adv_int_max` values in `adv_params`. The values are in 0.625 ms units.
-  
-- **Advertising Payload**: You can modify the advertisement payload to include more information, such as the device’s MAC address or custom data.
+- **Advertising Interval**  
+  Modify `adv_int_min` and `adv_int_max` (units of 0.625 ms) to study timing effects.
 
-## Troubleshooting
+- **Advertising Payload**  
+  Extend the payload to include manufacturer data or custom fields for further
+  experimentation.
 
-- **No Advertisements**: Ensure that your ESP32 board is correctly selected in the Arduino IDE. Verify that the ESP32 Bluetooth stack is properly initialized.
-  
-- **Advertising Interval Too Fast**: If the interval is too fast, the BLE scanner may miss some advertisements. Try increasing the `adv_int_max` and `adv_int_min` values.
+## Observations & Learnings
 
-## Upcoming Improvements
+This project helped build an understanding of:
+- BLE advertising packet structure
+- Timing behavior and scanner response
+- Limitations of frequent advertising updates
+- Practical differences between theoretical BLE specs and real-world behavior
 
-- **Multiple Advertising Types**: Add support for different types of BLE advertisements (e.g., connectable, scannable).
-- **Custom Data in Advertisements**: Allow users to include additional custom data in the advertisement payload, such as device-specific information or sensor data.
-- **Configurable Advertising Interval**: Provide a way to dynamically configure the advertisement interval via serial input or configuration file.
-- **MAC Address Spoofing**: Implement the ability to spoof different MAC addresses to simulate more unique devices.
-- **Advertisement Frequency Control**: Allow for adjusting the frequency of advertisements via external input, like a button or serial command.
-- **Logging and Debugging**: Implement enhanced logging to help debug BLE communication and advertising issues.
+## Possible Extensions
+
+- Support for multiple BLE advertising types
+- Runtime configuration via serial input
+- Comparative testing across different BLE scanners
+- Logging and analysis of advertising timing behavior
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License — see the [LICENSE](LICENSE) file for details.
